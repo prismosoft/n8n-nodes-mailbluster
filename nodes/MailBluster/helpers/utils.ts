@@ -1,4 +1,5 @@
 import { createHash } from 'node:crypto';
+import { NodeOperationError, type INode } from 'n8n-workflow';
 
 export type JsonObject = Record<string, unknown>;
 
@@ -8,32 +9,36 @@ export function leadIdentifierToHash(identifier: string): string {
 	return createHash('md5').update(value).digest('hex');
 }
 
-export function parseJsonObject(value: unknown, parameterName: string): JsonObject | undefined {
+export function parseJsonObject(
+	value: unknown,
+	parameterName: string,
+	node: INode,
+): JsonObject | undefined {
 	if (value === undefined || value === null || value === '') return undefined;
 	if (typeof value === 'object' && !Array.isArray(value)) return value as JsonObject;
 	if (typeof value !== 'string') {
-		throw new Error(`${parameterName} must be a JSON object`);
+		throw new NodeOperationError(node, `${parameterName} must be a JSON object`);
 	}
 
 	let parsed: unknown;
 	try {
 		parsed = JSON.parse(value);
 	} catch {
-		throw new Error(`${parameterName} must contain valid JSON`);
+		throw new NodeOperationError(node, `${parameterName} must contain valid JSON`);
 	}
 	if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
-		throw new Error(`${parameterName} must be a JSON object`);
+		throw new NodeOperationError(node, `${parameterName} must be a JSON object`);
 	}
 	return parsed as JsonObject;
 }
 
-export function parseJsonValue(value: unknown, parameterName: string): unknown {
+export function parseJsonValue(value: unknown, parameterName: string, node: INode): unknown {
 	if (value === undefined || value === null || value === '') return undefined;
 	if (typeof value !== 'string') return value;
 	try {
 		return JSON.parse(value);
 	} catch {
-		throw new Error(`${parameterName} must contain valid JSON`);
+		throw new NodeOperationError(node, `${parameterName} must contain valid JSON`);
 	}
 }
 
