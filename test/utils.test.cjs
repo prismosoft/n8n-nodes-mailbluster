@@ -8,6 +8,15 @@ const {
   responseNextPage,
 } = require('../dist/nodes/MailBluster/helpers/utils.js');
 
+const node = {
+  id: 'test',
+  name: 'Test',
+  type: 'test',
+  typeVersion: 1,
+  position: [0, 0],
+  parameters: {},
+};
+
 test('hashes lead emails exactly as MailBluster expects', () => {
   assert.equal(
     leadIdentifierToHash('richard@example.com'),
@@ -21,8 +30,10 @@ test('leaves an existing lead hash untouched', () => {
 });
 
 test('parses JSON objects and rejects arrays', () => {
-  assert.deepEqual(parseJsonObject('{"company":"Prismosoft"}', 'Meta'), { company: 'Prismosoft' });
-  assert.throws(() => parseJsonObject('[]', 'Meta'), /must be a JSON object/);
+  assert.deepEqual(parseJsonObject('{"company":"Prismosoft"}', 'Meta', node), {
+    company: 'Prismosoft',
+  });
+  assert.throws(() => parseJsonObject('[]', 'Meta', node), /must be a JSON object/);
 });
 
 test('extracts paginated API records and next page', () => {
