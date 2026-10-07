@@ -34,7 +34,7 @@ export const orderDescription: INodeProperties[] = [
 		displayName: 'Customer Email',
 		name: 'customerEmail',
 		type: 'string',
-		placeholder: 'name@example.com',
+		placeholder: 'name@email.com',
 		default: '',
 		required: true,
 		displayOptions: { show: { resource: ['order'], operation: ['create'] } },
@@ -70,13 +70,12 @@ export const orderDescription: INodeProperties[] = [
 		default: {},
 		displayOptions: { show: { resource: ['order'], operation: ['create'] } },
 		options: [
-			{ displayName: 'First Name', name: 'firstName', type: 'string', default: '' },
-			{ displayName: 'Last Name', name: 'lastName', type: 'string', default: '' },
-			{ displayName: 'Subscribed', name: 'subscribed', type: 'boolean', default: true },
-			{ displayName: 'Timezone', name: 'timezone', type: 'string', default: '' },
-			{ displayName: 'IP Address', name: 'ipAddress', type: 'string', default: '' },
 			{ displayName: 'Custom Fields (JSON)', name: 'fields', type: 'json', default: '{}' },
+			{ displayName: 'First Name', name: 'firstName', type: 'string', default: '' },
+			{ displayName: 'IP Address', name: 'ipAddress', type: 'string', default: '' },
+			{ displayName: 'Last Name', name: 'lastName', type: 'string', default: '' },
 			{ displayName: 'Meta (JSON)', name: 'meta', type: 'json', default: '{}' },
+			{ displayName: 'Subscribed', name: 'subscribed', type: 'boolean', default: true },
 			{
 				displayName: 'Tags (JSON)',
 				name: 'tags',
@@ -84,6 +83,7 @@ export const orderDescription: INodeProperties[] = [
 				default: '[]',
 				description: 'JSON array of customer tags',
 			},
+			{ displayName: 'Timezone', name: 'timezone', type: 'string', default: '' },
 		],
 	},
 	{
@@ -104,7 +104,7 @@ export const orderDescription: INodeProperties[] = [
 		],
 	},
 	{
-		displayName: 'Fields to Update',
+		displayName: 'Update Fields',
 		name: 'orderUpdateFields',
 		type: 'collection',
 		placeholder: 'Add Field',
