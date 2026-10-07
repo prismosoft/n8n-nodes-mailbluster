@@ -27,7 +27,16 @@ function getOrderItems(value: unknown): IDataObject[] | undefined {
 
 function asJson(value: unknown): IDataObject {
 	if (value && typeof value === 'object' && !Array.isArray(value)) return value as IDataObject;
-	return { value };
+	if (
+		value === null ||
+		typeof value === 'string' ||
+		typeof value === 'number' ||
+		typeof value === 'boolean'
+	) {
+		return { value };
+	}
+	if (value === undefined) return { value: null };
+	return { value: String(value) };
 }
 
 function toItems(values: unknown[], itemIndex: number): INodeExecutionData[] {
