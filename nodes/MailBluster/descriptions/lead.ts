@@ -20,7 +20,7 @@ export const leadDescription: INodeProperties[] = [
 		displayName: 'Email',
 		name: 'email',
 		type: 'string',
-		placeholder: 'name@example.com',
+		placeholder: 'name@email.com',
 		displayOptions: { show: { resource: ['lead'], operation: ['create'] } },
 		default: '',
 		required: true,
@@ -43,6 +43,13 @@ export const leadDescription: INodeProperties[] = [
 		displayOptions: { show: { resource: ['lead'], operation: ['create'] } },
 		options: [
 			{
+				displayName: 'Custom Fields (JSON)',
+				name: 'fields',
+				type: 'json',
+				default: '{}',
+				description: 'Custom field merge-tag/value pairs',
+			},
+			{
 				displayName: 'Double Opt-In',
 				name: 'doubleOptIn',
 				type: 'boolean',
@@ -52,13 +59,6 @@ export const leadDescription: INodeProperties[] = [
 			{ displayName: 'First Name', name: 'firstName', type: 'string', default: '' },
 			{ displayName: 'IP Address', name: 'ipAddress', type: 'string', default: '' },
 			{ displayName: 'Last Name', name: 'lastName', type: 'string', default: '' },
-			{
-				displayName: 'Custom Fields (JSON)',
-				name: 'fields',
-				type: 'json',
-				default: '{}',
-				description: 'Custom field merge-tag/value pairs',
-			},
 			{
 				displayName: 'Meta (JSON)',
 				name: 'meta',
@@ -98,21 +98,13 @@ export const leadDescription: INodeProperties[] = [
 		description: 'Lead email address or its MD5 hash; email addresses are hashed automatically',
 	},
 	{
-		displayName: 'Fields to Update',
+		displayName: 'Update Fields',
 		name: 'updateFields',
 		type: 'collection',
 		placeholder: 'Add Field',
 		default: {},
 		displayOptions: { show: { resource: ['lead'], operation: ['update'] } },
 		options: [
-			{ displayName: 'Email', name: 'email', type: 'string', default: '' },
-			{ displayName: 'First Name', name: 'firstName', type: 'string', default: '' },
-			{ displayName: 'Last Name', name: 'lastName', type: 'string', default: '' },
-			{ displayName: 'Timezone', name: 'timezone', type: 'string', default: '' },
-			{ displayName: 'IP Address', name: 'ipAddress', type: 'string', default: '' },
-			{ displayName: 'Subscribed', name: 'subscribed', type: 'boolean', default: true },
-			{ displayName: 'Custom Fields (JSON)', name: 'fields', type: 'json', default: '{}' },
-			{ displayName: 'Meta (JSON)', name: 'meta', type: 'json', default: '{}' },
 			{
 				displayName: 'Add Tags (JSON)',
 				name: 'addTags',
@@ -120,6 +112,18 @@ export const leadDescription: INodeProperties[] = [
 				default: '[]',
 				description: 'JSON array of tags to add',
 			},
+			{ displayName: 'Custom Fields (JSON)', name: 'fields', type: 'json', default: '{}' },
+			{
+				displayName: 'Email',
+				name: 'email',
+				type: 'string',
+				default: '',
+				placeholder: 'name@email.com',
+			},
+			{ displayName: 'First Name', name: 'firstName', type: 'string', default: '' },
+			{ displayName: 'IP Address', name: 'ipAddress', type: 'string', default: '' },
+			{ displayName: 'Last Name', name: 'lastName', type: 'string', default: '' },
+			{ displayName: 'Meta (JSON)', name: 'meta', type: 'json', default: '{}' },
 			{
 				displayName: 'Remove Tags (JSON)',
 				name: 'removeTags',
@@ -127,6 +131,8 @@ export const leadDescription: INodeProperties[] = [
 				default: '[]',
 				description: 'JSON array of tags to remove',
 			},
+			{ displayName: 'Subscribed', name: 'subscribed', type: 'boolean', default: true },
+			{ displayName: 'Timezone', name: 'timezone', type: 'string', default: '' },
 		],
 	},
 ];
