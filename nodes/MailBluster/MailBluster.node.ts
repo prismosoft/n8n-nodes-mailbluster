@@ -33,7 +33,7 @@ export class MailBluster implements INodeType {
 		name: 'mailBluster',
 		icon: {
 			light: 'file:../../icons/mailbluster.svg',
-			dark: 'file:../../icons/mailbluster.svg',
+			dark: 'file:../../icons/mailbluster.dark.svg',
 		},
 		group: ['transform'],
 		version: 1,
