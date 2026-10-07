@@ -1,15 +1,16 @@
-import type {
-	IDataObject,
-	IExecuteFunctions,
-	IHttpRequestMethods,
-	IHttpRequestOptions,
+import {
+	NodeApiError,
+	NodeOperationError,
+	sleep,
+	type IDataObject,
+	type IExecuteFunctions,
+	type IHttpRequestMethods,
+	type IHttpRequestOptions,
+	type JsonObject,
 } from 'n8n-workflow';
 
 const BASE_URL = 'https://api.mailbluster.com/api';
 const RETRYABLE_STATUS_CODES = new Set([429, 500, 502, 503, 504]);
-
-const sleep = async (milliseconds: number) =>
-	await new Promise<void>((resolve) => setTimeout(resolve, milliseconds));
 
 function getStatusCode(error: unknown): number | undefined {
 	if (!error || typeof error !== 'object') return undefined;
@@ -98,11 +99,19 @@ export async function mailBlusterApiRequest(
 			return await this.helpers.httpRequestWithAuthentication.call(this, 'mailBlusterApi', options);
 		} catch (error) {
 			const statusCode = getStatusCode(error);
-			if (!statusCode || !RETRYABLE_STATUS_CODES.has(statusCode) || attempt === 3) throw error;
+			const shouldRetry =
+				statusCode !== undefined &&
+				RETRYABLE_STATUS_CODES.has(statusCode) &&
+				attempt < 3;
+
+			if (!shouldRetry) {
+				throw new NodeApiError(this.getNode(), error as unknown as JsonObject);
+			}
+
 			const retryAfter = getRetryAfterMilliseconds(error);
 			await sleep(retryAfter ?? 1_000 * 2 ** attempt);
 		}
 	}
 
-	throw new Error('MailBluster request failed after retries');
+	throw new NodeOperationError(this.getNode(), 'MailBluster request failed after retries');
 }
