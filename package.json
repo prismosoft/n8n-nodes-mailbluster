@@ -1,61 +1,67 @@
 {
-  "name": "n8n-nodes-mailbluster",
-  "version": "0.1.0",
-  "description": "Production-ready n8n community node for the complete MailBluster Developer API.",
-  "license": "MIT",
-  "homepage": "https://github.com/prismosoft/n8n-nodes-mailbluster#readme",
-  "keywords": [
-    "n8n-community-node-package",
-    "n8n",
-    "mailbluster",
-    "email-marketing",
-    "marketing-automation"
-  ],
-  "author": {
-    "name": "Prismosoft",
-    "url": "https://github.com/prismosoft"
-  },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/prismosoft/n8n-nodes-mailbluster.git"
-  },
-  "bugs": {
-    "url": "https://github.com/prismosoft/n8n-nodes-mailbluster/issues"
-  },
-  "scripts": {
-    "build": "n8n-node build",
-    "build:watch": "tsc --watch",
-    "dev": "n8n-node dev",
-    "lint": "n8n-node lint",
-    "lint:fix": "n8n-node lint --fix",
-    "test": "npm run build && node --test test/**/*.test.cjs",
-    "release": "n8n-node release",
-    "prepublishOnly": "n8n-node prerelease"
-  },
-  "files": [
-    "dist"
-  ],
-  "publishConfig": {
-    "access": "public"
-  },
-  "n8n": {
-    "n8nNodesApiVersion": 1,
-    "strict": true,
-    "credentials": [
-      "dist/credentials/MailBlusterApi.credentials.js"
-    ],
-    "nodes": [
-      "dist/nodes/MailBluster/MailBluster.node.js"
-    ]
-  },
-  "devDependencies": {
-    "@n8n/node-cli": "*",
-    "eslint": "9.39.4",
-    "prettier": "3.8.3",
-    "release-it": "20.2.0",
-    "typescript": "5.9.3"
-  },
-  "peerDependencies": {
-    "n8n-workflow": "*"
-  }
+	"name": "n8n-nodes-mailbluster",
+	"version": "0.1.0",
+	"description": "Production-ready n8n community node for the complete MailBluster Developer API.",
+	"license": "MIT",
+	"homepage": "https://github.com/prismosoft/n8n-nodes-mailbluster#readme",
+	"keywords": [
+		"n8n-community-node-package",
+		"n8n",
+		"mailbluster",
+		"email-marketing",
+		"marketing-automation"
+	],
+	"author": {
+		"name": "Prismosoft",
+		"url": "https://github.com/prismosoft"
+	},
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/prismosoft/n8n-nodes-mailbluster.git"
+	},
+	"bugs": {
+		"url": "https://github.com/prismosoft/n8n-nodes-mailbluster/issues"
+	},
+	"scripts": {
+		"build": "n8n-node build",
+		"build:watch": "tsc --watch",
+		"dev": "n8n-node dev",
+		"lint": "n8n-node lint",
+		"lint:fix": "n8n-node lint --fix",
+		"test": "npm run build && node --test test/**/*.test.cjs",
+		"release": "n8n-node release",
+		"prepublishOnly": "n8n-node prerelease"
+	},
+	"files": [
+		"dist"
+	],
+	"publishConfig": {
+		"access": "public",
+		"provenance": true
+	},
+	"n8n": {
+		"n8nNodesApiVersion": 1,
+		"strict": true,
+		"credentials": [
+			"dist/credentials/MailBlusterApi.credentials.js"
+		],
+		"nodes": [
+			"dist/nodes/MailBluster/MailBluster.node.js"
+		]
+	},
+	"devDependencies": {
+		"@n8n/node-cli": "0.48.5",
+		"@types/node": "^22.0.0",
+		"eslint": "9.32.0",
+		"n8n-workflow": "2.16.0",
+		"prettier": "3.6.2",
+		"release-it": "^19.0.4",
+		"typescript": "5.9.2"
+	},
+	"peerDependencies": {
+		"n8n-workflow": "*"
+	},
+	"engines": {
+		"node": ">=22"
+	}
 }
