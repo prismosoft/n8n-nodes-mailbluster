@@ -1,0 +1,18 @@
+{
+	"node": "n8n-nodes-mailbluster",
+	"nodeVersion": "1.0",
+	"codexVersion": "1.0",
+	"categories": ["Marketing", "Sales"],
+	"resources": {
+		"credentialDocumentation": [
+			{
+				"url": "https://github.com/prismosoft/n8n-nodes-mailbluster#credentials"
+			}
+		],
+		"primaryDocumentation": [
+			{
+				"url": "https://github.com/prismosoft/n8n-nodes-mailbluster#readme"
+			}
+		]
+	}
+}
