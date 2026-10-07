@@ -13,7 +13,7 @@ export class MailBlusterApi implements ICredentialType {
 
 	icon: Icon = {
 		light: 'file:../icons/mailbluster.svg',
-		dark: 'file:../icons/mailbluster.svg',
+		dark: 'file:../icons/mailbluster.dark.svg',
 	};
 
 	documentationUrl = 'https://app.mailbluster.com/api-doc';
