@@ -56,10 +56,10 @@ async function executeLead(
 		};
 
 		if (additionalFields.fields !== undefined) {
-			body.fields = parseJsonObject(additionalFields.fields, 'Custom Fields');
+			body.fields = parseJsonObject(additionalFields.fields, 'Custom Fields', this.getNode());
 		}
 		if (additionalFields.meta !== undefined) {
-			body.meta = parseJsonObject(additionalFields.meta, 'Meta');
+			body.meta = parseJsonObject(additionalFields.meta, 'Meta', this.getNode());
 		}
 
 		const tags = tagCollectionToArray(this.getNodeParameter('tags', itemIndex, {}));
@@ -90,18 +90,19 @@ async function executeLead(
 				...(this.getNodeParameter('updateFields', itemIndex, {}) as IDataObject),
 			};
 			if (updateFields.fields !== undefined) {
-				updateFields.fields = parseJsonObject(updateFields.fields, 'Custom Fields');
+				updateFields.fields = parseJsonObject(updateFields.fields, 'Custom Fields', this.getNode());
 			}
 			if (updateFields.meta !== undefined) {
-				updateFields.meta = parseJsonObject(updateFields.meta, 'Meta');
+				updateFields.meta = parseJsonObject(updateFields.meta, 'Meta', this.getNode());
 			}
 			if (updateFields.addTags !== undefined) {
-				updateFields.addTags = parseJsonValue(updateFields.addTags, 'Add Tags') as IDataObject;
+				updateFields.addTags = parseJsonValue(updateFields.addTags, 'Add Tags', this.getNode()) as IDataObject;
 			}
 			if (updateFields.removeTags !== undefined) {
 				updateFields.removeTags = parseJsonValue(
 					updateFields.removeTags,
 					'Remove Tags',
+					this.getNode(),
 				) as IDataObject;
 			}
 			if (Object.keys(updateFields).length === 0) {
@@ -254,13 +255,14 @@ async function executeOrder(
 			customerOptions.fields = parseJsonObject(
 				customerOptions.fields,
 				'Customer Custom Fields',
+				this.getNode(),
 			) as IDataObject;
 		}
 		if (customerOptions.meta !== undefined) {
-			customerOptions.meta = parseJsonObject(customerOptions.meta, 'Customer Meta') as IDataObject;
+			customerOptions.meta = parseJsonObject(customerOptions.meta, 'Customer Meta', this.getNode()) as IDataObject;
 		}
 		if (customerOptions.tags !== undefined) {
-			customerOptions.tags = parseJsonValue(customerOptions.tags, 'Customer Tags') as IDataObject;
+			customerOptions.tags = parseJsonValue(customerOptions.tags, 'Customer Tags', this.getNode()) as IDataObject;
 		}
 
 		const items = getOrderItems(this.getNodeParameter('items', itemIndex, {}));
@@ -317,10 +319,10 @@ async function executeOrder(
 		...(this.getNodeParameter('orderUpdateFields', itemIndex, {}) as IDataObject),
 	};
 	if (updateFields.customer !== undefined) {
-		updateFields.customer = parseJsonObject(updateFields.customer, 'Customer') as IDataObject;
+		updateFields.customer = parseJsonObject(updateFields.customer, 'Customer', this.getNode()) as IDataObject;
 	}
 	if (updateFields.items !== undefined) {
-		updateFields.items = parseJsonValue(updateFields.items, 'Items') as IDataObject;
+		updateFields.items = parseJsonValue(updateFields.items, 'Items', this.getNode()) as IDataObject;
 	}
 	if (updateFields.currency) updateFields.currency = String(updateFields.currency).toUpperCase();
 	if (Object.keys(updateFields).length === 0) {
@@ -351,9 +353,10 @@ async function executeApi(
 	const query = parseJsonObject(
 		this.getNodeParameter('apiQuery', itemIndex, '{}'),
 		'Query Parameters',
+		this.getNode(),
 	);
 	const body = ['POST', 'PUT', 'PATCH'].includes(method)
-		? parseJsonObject(this.getNodeParameter('apiBody', itemIndex, '{}'), 'Body')
+		? parseJsonObject(this.getNodeParameter('apiBody', itemIndex, '{}'), 'Body', this.getNode())
 		: undefined;
 
 	const result = await mailBlusterApiRequest.call(
