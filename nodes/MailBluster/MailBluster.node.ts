@@ -31,7 +31,10 @@ export class MailBluster implements INodeType {
 	description: INodeTypeDescription = {
 		displayName: 'MailBluster',
 		name: 'mailBluster',
-		icon: 'file:../../icons/mailbluster.svg',
+		icon: {
+			light: 'file:../../icons/mailbluster.svg',
+			dark: 'file:../../icons/mailbluster.svg',
+		},
 		group: ['transform'],
 		version: 1,
 		subtitle: '={{$parameter["operation"] + ": " + $parameter["resource"]}}',
@@ -55,11 +58,11 @@ export class MailBluster implements INodeType {
 				type: 'options',
 				noDataExpression: true,
 				options: [
-					{ name: 'Lead', value: 'lead' },
-					{ name: 'Field', value: 'field' },
-					{ name: 'Product', value: 'product' },
-					{ name: 'Order', value: 'order' },
 					{ name: 'Custom API Call', value: 'api' },
+					{ name: 'Field', value: 'field' },
+					{ name: 'Lead', value: 'lead' },
+					{ name: 'Order', value: 'order' },
+					{ name: 'Product', value: 'product' },
 				],
 				default: 'lead',
 			},
@@ -97,7 +100,9 @@ export class MailBluster implements INodeType {
 					});
 					continue;
 				}
-				if (error instanceof NodeOperationError || error instanceof NodeApiError) throw error;
+				if (error instanceof NodeOperationError) {
+					throw new NodeOperationError(this.getNode(), error, { itemIndex });
+				}
 				throw new NodeApiError(this.getNode(), error as unknown as JsonObject, { itemIndex });
 			}
 		}
