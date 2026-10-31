@@ -50,7 +50,11 @@ function harness(parameters = {}, request = async () => ({ message: 'Lead added'
     helpers: {
       httpRequestWithAuthentication: async (credentialType, options) => {
         calls.push({ credentialType, options });
-        return request(options);
+        const result = await request(options);
+        if (!options.returnFullResponse || (
+          result && typeof result.statusCode === 'number' && Object.hasOwn(result, 'body')
+        )) return result;
+        return { statusCode: 200, headers: {}, body: result };
       },
     },
   };

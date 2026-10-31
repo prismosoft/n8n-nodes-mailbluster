@@ -8,6 +8,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Changed
 
+- Read full HTTP responses before n8n error wrapping so GET Retry-After
+  headers survive; safely inspect wrapped cause/errorResponse as a fallback.
+  Keep successful API bodies unchanged and never retry writes.
+
 - Default lead and order-customer subscriptions to false and require explicit
   local consent confirmation before setting subscription state to true.
   Existing workflows that subscribe contacts must add the confirmation.
@@ -16,6 +20,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
   and stop rather than shorten retry delays exceeding 120 seconds.
 
 ### Added
+
+- Real n8n CLI regression against an isolated local HTTPS fixture, plus
+  offline regressions for full responses and wrapped errors.
 
 - Offline regression tests for consent, request policy, timeout forwarding,
   Retry-After handling, and the per-execution limiter boundary.

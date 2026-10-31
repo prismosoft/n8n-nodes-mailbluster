@@ -235,6 +235,12 @@ replaced with local stubs; clocks and retry waits are simulated. No real API key
 or MailBluster account is required. Tests verify that the timeout is passed to
 n8n; they do not establish cancellation behavior in a deployed n8n instance.
 
+For a real HTTP/helper check without a live account, see
+[the isolated n8n regression](test/integration/README.md). This checks the
+Retry-After policy in the n8n CLI, including response headers that would
+otherwise be hidden by n8n's error wrapper. HTTP errors are read as full
+responses before wrapping; successful responses still return only the API body.
+
 ## Releasing to npm
 
 The repository includes a GitHub Actions publishing workflow using npm provenance, matching current n8n community-node publishing requirements.

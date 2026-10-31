@@ -32,13 +32,32 @@ if (typeof status === 'number') return status;
 	return undefined;
 }
 
+function getRetryAfterHeader(error: unknown): unknown {
+// n8n wraps Axios errors in NodeApiError. Read the original response through
+// cause (or errorResponse for plain-object errors), without serializing errors:
+// serialization can discard headers and expose request credentials.
+const pending: unknown[] = [error];
+const seen = new Set<object>();
+while (pending.length && seen.size < 16) {
+const current = pending.shift();
+if (!current || typeof current !== 'object' || seen.has(current)) continue;
+seen.add(current);
+const candidate = current as Record<string, unknown>;
+const response = candidate.response;
+if (response && typeof response === 'object') {
+const headers = (response as Record<string, unknown>).headers;
+if (headers && typeof headers === 'object') {
+const entry = Object.entries(headers).find(([name]) => name.toLowerCase() === 'retry-after');
+if (entry) return entry[1];
+}
+}
+pending.push(candidate.cause, candidate.errorResponse);
+}
+return undefined;
+}
+
 function getRetryAfterMilliseconds(error: unknown): number | undefined {
-	if (!error || typeof error !== 'object') return undefined;
-	const response = (error as Record<string, unknown>).response;
-	if (!response || typeof response !== 'object') return undefined;
-	const headers = (response as Record<string, unknown>).headers;
-	if (!headers || typeof headers !== 'object') return undefined;
-	const raw = (headers as Record<string, unknown>)['retry-after'];
+const raw = getRetryAfterHeader(error);
 if (typeof raw === 'number' && raw >= 0) return raw * 1000;
 if (typeof raw === 'string') {
 const value = raw.trim();
@@ -96,6 +115,10 @@ export async function mailBlusterApiRequest(
 		url: `${BASE_URL}${normalizedEndpoint}`,
 		json: true,
 timeout: REQUEST_TIMEOUT_MS,
+// Read HTTP failures as full responses before n8n can wrap them and discard
+// their headers (older NodeApiError versions do not preserve Error causes).
+returnFullResponse: true,
+ignoreHttpStatusErrors: true,
 		headers: {
 			Accept: 'application/json',
 			'Content-Type': 'application/json',
@@ -110,7 +133,16 @@ const maxAttempts = method === 'GET' ? 4 : 1;
 for (let attempt = 0; attempt < maxAttempts; attempt++) {
 		await limiter.wait();
 		try {
-			return await this.helpers.httpRequestWithAuthentication.call(this, 'mailBlusterApi', options);
+const response = await this.helpers.httpRequestWithAuthentication.call(
+this, 'mailBlusterApi', options,
+);
+if (response.statusCode >= 400) {
+throw new NodeApiError(this.getNode(), {
+statusCode: response.statusCode,
+response: { status: response.statusCode, headers: response.headers, data: response.body },
+});
+}
+return response.body;
 		} catch (error) {
 			const statusCode = getStatusCode(error);
 			const shouldRetry =
