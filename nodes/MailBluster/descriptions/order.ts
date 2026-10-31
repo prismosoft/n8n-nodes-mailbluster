@@ -70,12 +70,19 @@ export const orderDescription: INodeProperties[] = [
 		default: {},
 		displayOptions: { show: { resource: ['order'], operation: ['create'] } },
 		options: [
+{
+displayName: 'Consent Confirmed',
+name: 'consentConfirmed',
+type: 'boolean',
+default: false,
+description: 'Whether you have verified permission to subscribe the customer to marketing emails. Required when Subscribed is enabled; never sent to MailBluster.',
+},
 			{ displayName: 'Custom Fields (JSON)', name: 'fields', type: 'json', default: '{}' },
 			{ displayName: 'First Name', name: 'firstName', type: 'string', default: '' },
 			{ displayName: 'IP Address', name: 'ipAddress', type: 'string', default: '' },
 			{ displayName: 'Last Name', name: 'lastName', type: 'string', default: '' },
 			{ displayName: 'Meta (JSON)', name: 'meta', type: 'json', default: '{}' },
-			{ displayName: 'Subscribed', name: 'subscribed', type: 'boolean', default: true },
+{ displayName: 'Subscribed', name: 'subscribed', type: 'boolean', default: false },
 			{
 				displayName: 'Tags (JSON)',
 				name: 'tags',

@@ -46,6 +46,24 @@ function toItems(values: unknown[], itemIndex: number): INodeExecutionData[] {
 	}));
 }
 
+function validateSubscription(
+this: IExecuteFunctions,
+subscribed: unknown,
+consentConfirmed: unknown,
+itemIndex: number,
+): void {
+if (typeof subscribed !== 'boolean') {
+throw new NodeOperationError(this.getNode(), 'Subscribed must be an explicit boolean', { itemIndex });
+}
+if (subscribed && consentConfirmed !== true) {
+throw new NodeOperationError(
+this.getNode(),
+'Confirm permission to subscribe this lead before enabling Subscribed',
+{ itemIndex },
+);
+}
+}
+
 async function executeLead(
 	this: IExecuteFunctions,
 	limiter: MailBlusterRateLimiter,
@@ -58,10 +76,14 @@ async function executeLead(
 		const additionalFields = {
 			...(this.getNodeParameter('additionalFields', itemIndex, {}) as IDataObject),
 		};
+const subscribed = this.getNodeParameter('subscribed', itemIndex);
+validateSubscription.call(
+this, subscribed, this.getNodeParameter('consentConfirmed', itemIndex, false), itemIndex,
+);
 		const body: JsonObject = {
+...additionalFields,
 			email: this.getNodeParameter('email', itemIndex) as string,
-			subscribed: this.getNodeParameter('subscribed', itemIndex) as boolean,
-			...additionalFields,
+subscribed,
 		};
 
 		if (additionalFields.fields !== undefined) {
@@ -98,6 +120,11 @@ async function executeLead(
 			const updateFields = {
 				...(this.getNodeParameter('updateFields', itemIndex, {}) as IDataObject),
 			};
+const consentConfirmed = updateFields.consentConfirmed;
+delete updateFields.consentConfirmed;
+if (updateFields.subscribed !== undefined) {
+validateSubscription.call(this, updateFields.subscribed, consentConfirmed, itemIndex);
+}
 			if (updateFields.fields !== undefined) {
 				updateFields.fields = parseJsonObject(updateFields.fields, 'Custom Fields', this.getNode());
 			}
@@ -260,6 +287,10 @@ async function executeOrder(
 		const customerOptions = {
 			...(this.getNodeParameter('customerOptions', itemIndex, {}) as IDataObject),
 		};
+const consentConfirmed = customerOptions.consentConfirmed;
+delete customerOptions.consentConfirmed;
+if (customerOptions.subscribed === undefined) customerOptions.subscribed = false;
+validateSubscription.call(this, customerOptions.subscribed, consentConfirmed, itemIndex);
 		if (customerOptions.fields !== undefined) {
 			customerOptions.fields = parseJsonObject(
 				customerOptions.fields,
@@ -284,12 +315,12 @@ async function executeOrder(
 			...customerOptions,
 		});
 		const body = compactObject({
+...(this.getNodeParameter('orderOptions', itemIndex, {}) as IDataObject),
 			id: orderId,
 			customer,
 			currency: (this.getNodeParameter('currency', itemIndex) as string).toUpperCase(),
 			totalPrice: this.getNodeParameter('totalPrice', itemIndex) as number,
 			items,
-			...(this.getNodeParameter('orderOptions', itemIndex, {}) as IDataObject),
 		});
 
 		return toItems(
@@ -328,7 +359,15 @@ async function executeOrder(
 		...(this.getNodeParameter('orderUpdateFields', itemIndex, {}) as IDataObject),
 	};
 	if (updateFields.customer !== undefined) {
-		updateFields.customer = parseJsonObject(updateFields.customer, 'Customer', this.getNode()) as IDataObject;
+const customer = {
+...parseJsonObject(updateFields.customer, 'Customer', this.getNode()),
+};
+const consentConfirmed = customer.consentConfirmed;
+delete customer.consentConfirmed;
+if (customer.subscribed !== undefined) {
+validateSubscription.call(this, customer.subscribed, consentConfirmed, itemIndex);
+}
+updateFields.customer = customer as IDataObject;
 	}
 	if (updateFields.items !== undefined) {
 		updateFields.items = parseJsonValue(updateFields.items, 'Items', this.getNode()) as IDataObject;
