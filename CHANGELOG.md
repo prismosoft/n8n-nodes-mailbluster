@@ -21,6 +21,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Added
 
+- A separate read-only CI job for the real n8n Retry-After regression, with
+  loopback-only network isolation, pinned runtime versions and no live secrets.
+
 - Real n8n CLI regression against an isolated local HTTPS fixture, plus
   offline regressions for full responses and wrapped errors.
 

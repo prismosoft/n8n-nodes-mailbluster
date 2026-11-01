@@ -35,3 +35,22 @@ Do not run outside the isolated namespace or substitute real credentials.
 
 Validated with n8n 2.45.7 / Node 24.22.1. Other versions, queue workers,
 concurrent workflows and the browser UI are not covered by this check.
+
+## GitHub Actions
+
+The `CI` workflow runs this regression in its own `n8n-integration` job on
+pull requests and pushes to `main`. It pins Ubuntu 24.04, Node 24.22.1 and
+n8n 2.45.7. Package installation happens before network isolation; the test
+process and its children have loopback access only. No repository secrets,
+MailBluster account or production credentials are needed.
+
+The job uses `sudo` only to enter the isolated namespace and serve local HTTPS
+on port 443, with the exact Node binary selected by setup-node. It fails if
+namespace creation or a regression assertion fails. Only the test's textual
+output is retained for seven days, not the TLS key, n8n state or credentials.
+The separate `validate` job runs lint, the offline suite/build and a package
+dry-run. Publishing remains in the existing separate release workflow.
+
+Fork pull requests may require a repository maintainer to approve the workflow
+run under GitHub's fork policy; this workflow does not use `pull_request_target`
+or attempt to bypass that approval.
