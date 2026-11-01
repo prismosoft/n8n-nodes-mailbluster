@@ -11,6 +11,8 @@ import {
 
 const BASE_URL = 'https://api.mailbluster.com/api';
 const RETRYABLE_STATUS_CODES = new Set([429, 500, 502, 503, 504]);
+const REQUEST_TIMEOUT_MS = 10_000;
+const MAX_RETRY_DELAY_MS = 120_000;
 
 function getStatusCode(error: unknown): number | undefined {
 	if (!error || typeof error !== 'object') return undefined;
@@ -24,19 +26,47 @@ function getStatusCode(error: unknown): number | undefined {
 	if (response && typeof response === 'object') {
 		const responseStatus = (response as Record<string, unknown>).statusCode;
 		if (typeof responseStatus === 'number') return responseStatus;
+const status = (response as Record<string, unknown>).status;
+if (typeof status === 'number') return status;
 	}
 	return undefined;
 }
 
+function getRetryAfterHeader(error: unknown): unknown {
+// n8n wraps Axios errors in NodeApiError. Read the original response through
+// cause (or errorResponse for plain-object errors), without serializing errors:
+// serialization can discard headers and expose request credentials.
+const pending: unknown[] = [error];
+const seen = new Set<object>();
+while (pending.length && seen.size < 16) {
+const current = pending.shift();
+if (!current || typeof current !== 'object' || seen.has(current)) continue;
+seen.add(current);
+const candidate = current as Record<string, unknown>;
+const response = candidate.response;
+if (response && typeof response === 'object') {
+const headers = (response as Record<string, unknown>).headers;
+if (headers && typeof headers === 'object') {
+const entry = Object.entries(headers).find(([name]) => name.toLowerCase() === 'retry-after');
+if (entry) return entry[1];
+}
+}
+pending.push(candidate.cause, candidate.errorResponse);
+}
+return undefined;
+}
+
 function getRetryAfterMilliseconds(error: unknown): number | undefined {
-	if (!error || typeof error !== 'object') return undefined;
-	const response = (error as Record<string, unknown>).response;
-	if (!response || typeof response !== 'object') return undefined;
-	const headers = (response as Record<string, unknown>).headers;
-	if (!headers || typeof headers !== 'object') return undefined;
-	const raw = (headers as Record<string, unknown>)['retry-after'];
-	if (typeof raw === 'string' && /^\d+(?:\.\d+)?$/.test(raw)) return Number(raw) * 1000;
-	if (typeof raw === 'number') return raw * 1000;
+const raw = getRetryAfterHeader(error);
+if (typeof raw === 'number' && raw >= 0) return raw * 1000;
+if (typeof raw === 'string') {
+const value = raw.trim();
+if (/^\d+(?:\.\d+)?$/.test(value)) return Number(value) * 1000;
+if (/^(Mon|Tue|Wed|Thu|Fri|Sat|Sun), /i.test(value)) {
+const timestamp = Date.parse(value);
+if (Number.isFinite(timestamp)) return Math.max(0, timestamp - Date.now());
+}
+}
 	return undefined;
 }
 
@@ -84,6 +114,11 @@ export async function mailBlusterApiRequest(
 		method,
 		url: `${BASE_URL}${normalizedEndpoint}`,
 		json: true,
+timeout: REQUEST_TIMEOUT_MS,
+// Read HTTP failures as full responses before n8n can wrap them and discard
+// their headers (older NodeApiError versions do not preserve Error causes).
+returnFullResponse: true,
+ignoreHttpStatusErrors: true,
 		headers: {
 			Accept: 'application/json',
 			'Content-Type': 'application/json',
@@ -93,23 +128,39 @@ export async function mailBlusterApiRequest(
 	if (body && Object.keys(body).length) options.body = body;
 	if (qs && Object.keys(qs).length) options.qs = qs;
 
-	for (let attempt = 0; attempt < 4; attempt++) {
+// A failed write may already have been applied. Never automatically repeat it.
+const maxAttempts = method === 'GET' ? 4 : 1;
+for (let attempt = 0; attempt < maxAttempts; attempt++) {
 		await limiter.wait();
 		try {
-			return await this.helpers.httpRequestWithAuthentication.call(this, 'mailBlusterApi', options);
+const response = await this.helpers.httpRequestWithAuthentication.call(
+this, 'mailBlusterApi', options,
+);
+if (response.statusCode >= 400) {
+throw new NodeApiError(this.getNode(), {
+statusCode: response.statusCode,
+response: { status: response.statusCode, headers: response.headers, data: response.body },
+});
+}
+return response.body;
 		} catch (error) {
 			const statusCode = getStatusCode(error);
 			const shouldRetry =
 				statusCode !== undefined &&
 				RETRYABLE_STATUS_CODES.has(statusCode) &&
-				attempt < 3;
+attempt < maxAttempts - 1;
 
 			if (!shouldRetry) {
 				throw new NodeApiError(this.getNode(), error as unknown as JsonObject);
 			}
 
 			const retryAfter = getRetryAfterMilliseconds(error);
-			await sleep(retryAfter ?? 1_000 * 2 ** attempt);
+const delay = retryAfter ?? 1_000 * 2 ** attempt;
+// Do not retry earlier than the server requested, or wait without a bound.
+if (!Number.isFinite(delay) || delay > MAX_RETRY_DELAY_MS) {
+throw new NodeApiError(this.getNode(), error as unknown as JsonObject);
+}
+await sleep(delay);
 		}
 	}
 

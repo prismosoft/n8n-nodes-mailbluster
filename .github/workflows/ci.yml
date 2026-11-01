@@ -10,17 +10,23 @@ concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: true
 
+permissions:
+  contents: read
+
 jobs:
   validate:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
 
     steps:
       - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
 
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 'lts/*'
+          node-version: '24.22.1'
           cache: npm
 
       - name: Install dependencies
@@ -33,4 +39,63 @@ jobs:
         run: npm test
 
       - name: Verify npm package contents
-        run: npm pack --dry-run
+        run: npm pack --dry-run --ignore-scripts
+
+  n8n-integration:
+    name: n8n Retry-After regression (isolated)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24.22.1'
+          cache: npm
+
+      - name: Install component dependencies and build
+        run: |
+          npm ci
+          npm run build
+
+      # Only setup uses the network. n8n is installed outside the repository;
+      # it does not alter the component's dependencies or release package.
+      - name: Prepare pinned n8n runtime and local TLS fixture
+        shell: bash
+        run: |
+          set -euo pipefail
+          command -v unshare
+          command -v ip
+          command -v openssl
+          runtime="$RUNNER_TEMP/mailbluster-runtime"
+          mkdir -p "$runtime"
+          npm install --prefix "$runtime" --no-audit --no-fund n8n@2.45.7
+          openssl req -x509 -newkey rsa:2048 -nodes \
+            -keyout "$runtime/server.key" -out "$runtime/server.crt" \
+            -days 1 -subj '/CN=api.mailbluster.com' \
+            -addext 'subjectAltName=DNS:api.mailbluster.com'
+
+      - name: Run real n8n regression with loopback only
+        shell: bash
+        run: |
+          set -euo pipefail
+          # Root is needed only for the namespace and local HTTPS port 443.
+          # Use the exact setup-node binary rather than sudo's default Node.
+          sudo env N8N_TEST_DIR="$RUNNER_TEMP/mailbluster-runtime" \
+            unshare --net -- bash -c \
+            'set -euo pipefail; ip link set lo up; exec "$1" "$2"' \
+            _ "$(command -v node)" "$GITHUB_WORKSPACE/test/integration/n8n-local.cjs" \
+            2>&1 | tee "$RUNNER_TEMP/mailbluster-integration.log"
+
+      - name: Retain regression output (no credentials or database)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: mailbluster-n8n-regression
+          path: ${{ runner.temp }}/mailbluster-integration.log
+          if-no-files-found: ignore
+          retention-days: 7
